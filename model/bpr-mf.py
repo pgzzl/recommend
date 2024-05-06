@@ -112,14 +112,14 @@ class BPR(nn.Module):
 
         for i in range(0,user_emd.shape[0],batch):
             #(要处理的user，item_size),newones除了张量形状，类型和device与调用的tensor相同
-            mask=user_emd.new_ones([min([batch,user_emd[0]-i]),item_emd.shape[0]])
+            mask=user_emd.new_ones([min([batch,user_emd.shape[0]-i]),item_emd.shape[0]])
             for j in range(batch):
                 if i+j>=user_emd.shape[0]:
                     break
                 #scatter_() 方法用于按照给定的索引，在指定的维度上将指定的值赋值给张量。
                 #将已经训练过的用户的项目置零，以便在预测时不会推荐已经训练过的项目。
                 mask[j].scatter_(dim=0,index=torch.tensor(list(train_user_list[i+j])).to(device),
-                                 value=torch.tensor(0,0).to(device))
+                                 value=torch.tensor(0.0).to(device))
                 cur_result=torch.mm(user_emd[i:i+min(batch,user_emd.shape[0]-i),:],item_emd.t())
 
                 cur_result=torch.sigmoid(cur_result)
@@ -190,7 +190,7 @@ def main(args):
         writer.add_scalar('train/loss', loss, idx)
         smooth_loss = smooth_loss * 0.99 + loss * 0.01
         if idx % args.print_every == (args.print_every - 1):
-            print('loss: %.4f' % smooth_loss)
+            print(' loss: %.4f'% (smooth_loss))
         if idx % args.eval_every == (args.eval_every - 1):
             plist, rlist, hitlist = model.precision_and_recall_k(model.W.detach(),
                                                         model.H.detach(),
@@ -248,7 +248,7 @@ if __name__ == '__main__':
     # Training
     parser.add_argument('--n_epochs',
                         type=int,
-                        default=800,
+                        default=10,
                         help="Number of epoch during training")
     parser.add_argument('--batch_size',
                         type=int,

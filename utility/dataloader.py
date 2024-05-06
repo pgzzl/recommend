@@ -67,10 +67,11 @@ def create_pair(user_list):
         pair.extend([(user, item) for item in item_list])
     return pair
 
-def create_app_list(df, app_size):
-    app_list = [list() for u in range(app_size)]
+#app create list
+def create_user_list(df, user_size):
+    app_list = [list() for u in range(user_size)]
     for row in df.itertuples():
-        app_list[row[0]].append(row[1])
+        app_list[row.app].append(row.lib)
     return app_list
 
 def split_train_test(df, user_size, test_size=0.2, time_order=False):
@@ -83,10 +84,12 @@ def split_train_test(df, user_size, test_size=0.2, time_order=False):
         train_idx = list(set(range(len(df))) - set(test_idx))
         test_df = df.loc[test_idx].reset_index(drop=True)
         train_df = df.loc[train_idx].reset_index(drop=True)
-        test_user_list = create_app_list(test_df, app_size)
-        train_user_list = create_app_list(train_df, app_size)
+        #记载了test集app和lib的交互
+        test_user_list = create_user_list(test_df, user_size)
+        #记载了train集app和lib的交互
+        train_user_list = create_user_list(train_df, user_size)
     else:
-        total_user_list = create_app_list(df, app_size)
+        total_user_list = create_user_list(df, app_size)
         train_user_list = [None] * len(user_list)
         test_user_list = [None] * len(user_list)
         for user, item_list in enumerate(total_user_list):
@@ -99,8 +102,8 @@ def split_train_test(df, user_size, test_size=0.2, time_order=False):
             test_user_list[user] = test_item
             train_user_list[user] = train_item
     # Remove time
-    test_user_list = [list(map(lambda x: x[1], l)) for l in test_user_list]
-    train_user_list = [list(map(lambda x: x[1], l)) for l in train_user_list]
+    # test_user_list = [list(map(lambda x: x[1], l)) for l in test_user_list]
+    # train_user_list = [list(map(lambda x: x[1], l)) for l in train_user_list]
     return train_user_list, test_user_list
 
 dataset=app(csv_app_path,csv_lib_path,csv_applib_path)
@@ -118,13 +121,13 @@ dataset=app(csv_app_path,csv_lib_path,csv_applib_path)
 # print(len(test_dataset))
 # print(app.size())
 # print(lib.size())
-
-df, app_mapping = convert_unique_idx(dataset.load(), 0)
-df, lib_mapping = convert_unique_idx(df, 1)
+df=dataset.load()
+df, app_mapping = convert_unique_idx(df, 'app')
+df, lib_mapping = convert_unique_idx(df, 'lib')
 print('Complete assigning unique index to app and lib')
 
-app_size = len(df[0].unique())
-lib_size = len(df[1].unique())
+app_size = len(df['app'].unique())#与lib有交互的
+lib_size = len(df['lib'].unique())
 print('app size:'+str(app_size))
 print('lib_size:'+str(lib_size))
 
